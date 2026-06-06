@@ -1,5 +1,5 @@
 /* Service worker: cache the app shell so Reisekurs opens fully offline. */
-const CACHE = "reisekurs-v1";
+const CACHE = "reisekurs-v2";
 const SHELL = [
   "./",
   "index.html",
