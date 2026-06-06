@@ -1,11 +1,11 @@
 /* Reisekurs – offline currency converter for Singapore, Indonesia & Thailand. */
 
 const CURRENCIES = [
-  { code: "SGD", country: "Singapur",     flag: "🇸🇬", symbol: "S$",  decimals: 2 },
-  { code: "IDR", country: "Indonesien",   flag: "🇮🇩", symbol: "Rp",  decimals: 0 },
-  { code: "THB", country: "Thailand",     flag: "🇹🇭", symbol: "฿",   decimals: 2 },
+  { code: "SGD", country: "Singapur",   flag: "🇸🇬", symbol: "S$", decimals: 2, quick: [20, 50, 100] },
+  { code: "IDR", country: "Indonesien", flag: "🇮🇩", symbol: "Rp", decimals: 0, quick: [100000, 500000, 1000000] },
+  { code: "THB", country: "Thailand",   flag: "🇹🇭", symbol: "฿",  decimals: 2, quick: [100, 500, 1000] },
 ];
-const BASE = { code: "EUR", country: "Euro", flag: "🇪🇺", symbol: "€", decimals: 2 };
+const BASE = { code: "EUR", country: "Euro", flag: "🇪🇺", symbol: "€", decimals: 2, quick: [50, 100, 500] };
 const API = "https://open.er-api.com/v6/latest/EUR";
 const LS = "reisekurs.v1";
 
@@ -90,12 +90,19 @@ function renderConverter() {
   computeOutput();
 }
 
+function quickLabel(v, symbol) {
+  let txt;
+  if (v >= 1000000) txt = new Intl.NumberFormat("de-DE").format(v / 1000000) + " Mio";
+  else txt = new Intl.NumberFormat("de-DE").format(v);
+  return `${txt} ${symbol}`;
+}
+
 function renderQuick(top) {
   const q = $("quick");
   q.innerHTML = "";
-  [50, 100, 500].forEach((v) => {
+  (top.quick || [50, 100, 500]).forEach((v) => {
     const b = document.createElement("button");
-    b.textContent = `${v} ${top.symbol}`;
+    b.textContent = quickLabel(v, top.symbol);
     b.onclick = () => {
       state.amount = String(v);
       save();
