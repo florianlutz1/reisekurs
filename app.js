@@ -104,10 +104,8 @@ function renderQuick(top) {
     const b = document.createElement("button");
     b.textContent = quickLabel(v, top.symbol);
     b.onclick = () => {
-      state.amount = String(v);
-      save();
-      $("top-input").value = state.amount;
-      computeOutput();
+      $("top-input").value = String(v);
+      formatTopInput();   // applies thousands grouping + saves + recomputes
     };
     q.appendChild(b);
   });
@@ -236,12 +234,57 @@ function recomputeOwnRate() {
   computeOutput();
 }
 
-/* ---------- events ---------- */
-$("top-input").addEventListener("input", (e) => {
-  state.amount = e.target.value;
+/* ---------- live thousands formatting for the input ---------- */
+function topCurrency() {
+  const c = cur(state.activeCode);
+  return state.direction === "localToEur" ? c : BASE;
+}
+
+// Reformats the top input with de-DE thousands dots while typing, keeping the caret stable.
+function formatTopInput() {
+  const top = topCurrency();
+  const allowDec = top.decimals > 0;
+  const input = $("top-input");
+  const old = input.value;
+  const pos = input.selectionStart ?? old.length;
+  const meaningfulRe = allowDec ? /[^0-9,]/g : /[^0-9]/g;
+
+  // how many "meaningful" chars (digits, and comma if allowed) sit before the caret
+  const meaningfulBefore = old.slice(0, pos).replace(meaningfulRe, "").length;
+
+  // strip grouping dots & junk; keep digits (+ first comma)
+  let s = old.replace(meaningfulRe, "");
+  if (allowDec) {
+    const ci = s.indexOf(",");
+    if (ci !== -1) s = s.slice(0, ci + 1) + s.slice(ci + 1).replace(/,/g, "");
+  }
+
+  const comma = allowDec ? s.indexOf(",") : -1;
+  let intPart = comma === -1 ? s : s.slice(0, comma);
+  let decPart = comma === -1 ? null : s.slice(comma + 1).slice(0, top.decimals);
+  intPart = intPart.replace(/^0+(?=\d)/, "");
+
+  let formatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  if (decPart !== null) formatted += "," + decPart;
+
+  input.value = formatted;
+
+  // place caret after the same number of meaningful chars
+  let count = 0, newPos = 0;
+  for (let i = 0; i < formatted.length; i++) {
+    newPos = i + 1;
+    if (/[0-9,]/.test(formatted[i])) { count++; if (count >= meaningfulBefore) break; }
+  }
+  if (meaningfulBefore === 0) newPos = 0;
+  try { input.setSelectionRange(newPos, newPos); } catch (e) {}
+
+  state.amount = formatted;
   save();
   computeOutput();
-});
+}
+
+/* ---------- events ---------- */
+$("top-input").addEventListener("input", formatTopInput);
 
 $("swap").addEventListener("click", () => {
   // carry the current result into the input so the equivalence stays on screen
