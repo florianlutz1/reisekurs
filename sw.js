@@ -1,5 +1,8 @@
-/* Service worker: cache the app shell so Reisekurs opens fully offline. */
-const CACHE = "reisekurs-v2";
+/* Service worker for Reisekurs.
+   Strategy: network-first for the app shell (so updates always arrive when online),
+   cache fallback when offline. Icons are cache-first. The FX API is never handled
+   here – the app keeps its own daily rates in localStorage for offline use. */
+const CACHE = "reisekurs-v3";
 const SHELL = [
   "./",
   "index.html",
@@ -27,15 +30,29 @@ self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
 
-  // Never cache the live FX API – always go to network (app falls back to its own stored rates).
-  if (req.url.includes("open.er-api.com")) return;
+  const url = new URL(req.url);
 
-  // App shell: cache-first.
+  // Never intercept the live FX API – always straight to network.
+  if (url.hostname.includes("open.er-api.com")) return;
+
+  // Icons rarely change → cache-first (fast, offline-safe).
+  if (url.pathname.includes("/icons/")) {
+    e.respondWith(
+      caches.match(req).then((hit) => hit || fetch(req).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+        return res;
+      }))
+    );
+    return;
+  }
+
+  // App shell (HTML/JS/CSS/manifest) + navigations → network-first.
   e.respondWith(
-    caches.match(req).then((hit) => hit || fetch(req).then((res) => {
+    fetch(req).then((res) => {
       const copy = res.clone();
       caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
       return res;
-    }).catch(() => caches.match("index.html")))
+    }).catch(() => caches.match(req).then((hit) => hit || caches.match("index.html")))
   );
 });

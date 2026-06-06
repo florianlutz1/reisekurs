@@ -289,5 +289,18 @@ renderAll();
 fetchRates();
 
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js", { updateViaCache: "none" })
+      .then((reg) => {
+        reg.update();                       // proactively check for a new version
+        // when a new worker takes over, reload once to show the fresh version
+        let reloaded = false;
+        navigator.serviceWorker.addEventListener("controllerchange", () => {
+          if (reloaded) return;
+          reloaded = true;
+          window.location.reload();
+        });
+      })
+      .catch(() => {});
+  });
 }
