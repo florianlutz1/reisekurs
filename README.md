@@ -19,18 +19,12 @@ python3 -m http.server 5175
 # http://localhost:5175 im Browser öffnen
 ```
 
+## Live
+**https://florianlutz1.github.io/reisekurs/** (GitHub Pages, Repo `florianlutz1/reisekurs`).
+Bei Änderungen einfach `git push` – Pages baut automatisch neu.
+
 ## Aufs iPhone bringen (als installierbare Offline-App)
-Service Worker brauchen HTTPS. Am einfachsten kostenlos hosten:
-
-**Option A – Netlify Drop (kein Account-Setup nötig):**
-1. https://app.netlify.com/drop öffnen
-2. den Ordner `currency-converter/` reinziehen → du bekommst eine `https://…netlify.app`-URL
-
-**Option B – GitHub Pages:**
-1. Ordner in ein Repo pushen, in den Repo-Settings Pages aktivieren (Branch `main`, Root)
-
-**Dann am iPhone (Safari):**
-1. die HTTPS-URL öffnen
+1. **https://florianlutz1.github.io/reisekurs/** in **Safari** öffnen
 2. Teilen-Symbol → **„Zum Home-Bildschirm“**
 3. Das „Reisekurs“-Icon erscheint – startet im Vollbild und läuft offline.
 
