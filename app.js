@@ -85,6 +85,7 @@ function renderConverter() {
 
   const input = $("top-input");
   if (document.activeElement !== input) input.value = state.amount;
+  fitField(input);
 
   renderQuick(top);
   computeOutput();
@@ -111,6 +112,17 @@ function renderQuick(top) {
   });
 }
 
+// Shrink a value field's font until the (long) number fits on one line.
+function fitField(el) {
+  el.style.fontSize = "";
+  let size = 38, guard = 0;
+  while (el.scrollWidth > el.clientWidth && size > 18 && guard < 24) {
+    size -= 2;
+    el.style.fontSize = size + "px";
+    guard++;
+  }
+}
+
 function computeOutput() {
   const c = cur(state.activeCode);
   const R = effectiveRate(c.code);            // local per 1 EUR
@@ -118,12 +130,13 @@ function computeOutput() {
   const out = $("bottom-value");
   const localToEur = state.direction === "localToEur";
 
-  if (!R || !isFinite(amt)) { out.textContent = "0"; return; }
+  if (!R || !isFinite(amt)) { out.textContent = "0"; fitField(out); return; }
 
   let value, decimals;
   if (localToEur) { value = amt / R; decimals = BASE.decimals; }
   else { value = amt * R; decimals = c.decimals; }
   out.textContent = fmt(value, decimals);
+  fitField(out);
 }
 
 function renderRateMode() {
@@ -278,6 +291,7 @@ function formatTopInput() {
   if (meaningfulBefore === 0) newPos = 0;
   try { input.setSelectionRange(newPos, newPos); } catch (e) {}
 
+  fitField(input);
   state.amount = formatted;
   save();
   computeOutput();
